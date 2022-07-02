@@ -12,6 +12,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 def disp_to_depth(disp, min_depth, max_depth):
     """Convert network's sigmoid output into depth prediction
@@ -152,11 +154,11 @@ class BackprojectDepth(nn.Module):
                                       requires_grad=False)
 
         self.ones = nn.Parameter(torch.ones(self.batch_size, 1, self.height * self.width),
-                                 requires_grad=False)
+                                 requires_grad=False).to(device)
 
         self.pix_coords = torch.unsqueeze(torch.stack(
             [self.id_coords[0].view(-1), self.id_coords[1].view(-1)], 0), 0)
-        self.pix_coords = self.pix_coords.repeat(batch_size, 1, 1)
+        self.pix_coords = self.pix_coords.repeat(batch_size, 1, 1).to(device)
         self.pix_coords = nn.Parameter(torch.cat([self.pix_coords, self.ones], 1),
                                        requires_grad=False)
 
@@ -267,3 +269,16 @@ def compute_depth_errors(gt, pred):
     sq_rel = torch.mean((gt - pred) ** 2 / gt)
 
     return abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3
+
+def compute_reprojection_loss(pred, target):
+    """Computes reprojection loss between a batch of predicted and target images
+    """
+    abs_diff = torch.abs(target - pred)
+    l1_loss = abs_diff.mean(1, True)
+
+    ssim = SSIM()
+
+    ssim_loss = ssim(pred, target).mean(1, True)
+    reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+
+    return reprojection_loss
