@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from PIL import Image
 from torchvision.transforms import transforms
 import torch
@@ -7,9 +8,10 @@ from torch.utils.data import Dataset
 to_tensor = transforms.Compose([transforms.Resize((384, 1248)), transforms.ToTensor()])
 class KittiOdom(Dataset):
 
-    def __init__(self, csv_path) -> None:
+    def __init__(self, csv_path, root) -> None:
         super(KittiOdom, self).__init__()
 
+        self.root = root
         self.img_list = pd.read_csv(csv_path)
         self.K = np.array([[0.576, 0, 0.4865, 0],
                            [0, 1.872, 0.4823, 0],
@@ -23,8 +25,8 @@ class KittiOdom(Dataset):
 
     def __getitem__(self, index):
         sample = {}
-        source = Image.open(self.img_list.iloc[index]['source'])
-        target = Image.open(self.img_list.iloc[index]['target'])
+        source = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source']))
+        target = Image.open(os.path.join(self.img_list.iloc[index]['target']))
         
         source, target = to_tensor(source), to_tensor(target)
         sample['source'] = source
@@ -35,9 +37,9 @@ class KittiOdom(Dataset):
 
 class KittiStereo(Dataset):
 
-    def __init__(self, csv_path) -> None:
+    def __init__(self, csv_path, root) -> None:
         super(KittiStereo, self).__init__()
-
+        self.root = root
         self.img_list = pd.read_csv(csv_path)
 
     def __len__(self):
@@ -45,11 +47,11 @@ class KittiStereo(Dataset):
 
     def __getitem__(self, index):
         sample = {}
-        source = Image.open(self.img_list.iloc[index]['source'])
+        source = Image.open(os.path.join(self.root,self.img_list.iloc[index]['source']))
         target = list(self.img_list.iloc[index]['source'])
         target[-21] = '3'
         target = "".join(target)
-        target = Image.open(target)
+        target = Image.open(os.path.join(self.root,target))
         # source, target = to_tensor(source), to_tensor(target)
         sample['source'] = source
         sample['target'] = target

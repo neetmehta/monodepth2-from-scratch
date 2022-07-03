@@ -32,10 +32,10 @@ def make_csv(split_path, split_name='eigen_full_train'):
         img_dict[key].sort()
 
         for i in range(len(img_dict[key])-1):
-            sample = [osp(root,key,f"image_02\\data\\{num_parser(img_dict[key][i])}.png"), osp(root,key,f"image_02\\data\\{num_parser(img_dict[key][i+1])}.png")]
+            sample = [osp(key,f"image_02\\data\\{num_parser(img_dict[key][i])}.png"), osp(key,f"image_02\\data\\{num_parser(img_dict[key][i+1])}.png")]
             sample_list.append(sample)
 
     dataframe = pd.DataFrame(columns=['target', 'source'], data=sample_list)
-    dataframe.to_csv(f'../{split_name}.csv')
+    dataframe.to_csv(f'{split_name}.csv')
 
             
