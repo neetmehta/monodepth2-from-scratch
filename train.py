@@ -18,8 +18,8 @@ torch.manual_seed(123)
 print('seed created')
 
 
-APPLY_AUG = True
-PRETRAINED = True
+# APPLY_AUG = True
+# PRETRAINED = True
 ROOT = r"E:\Deep Learning Projects\datasets\kitti_raw"
 BATCH_SIZE = 2
 LEARNING_RATE = 1e-4
@@ -28,8 +28,7 @@ PIN_MEMORY = True
 NUM_EPOCHS = 200
 CKPT_DIR = "ckpt"
 RESUME = True
-DEPTH_PATH = "ckpt/depth_epoch_0.ckpt"
-POSE_PATH = 'ckpt/pose_epoch_0.ckpt'
+STATE_DICT_PATH = 'ckpt\model_epoch_0.ckpt'
 TENSORBOARD_FOLDER = 'tensorboard/runs'
 os.makedirs(CKPT_DIR, exist_ok=True)
 os.makedirs(TENSORBOARD_FOLDER, exist_ok=True)
@@ -40,6 +39,14 @@ writer = SummaryWriter(TENSORBOARD_FOLDER)
 model = {}
 model['pose_network'] = PoseCNN(num_input_frames=2).to(device)
 model['depth_network'] = DepthNetwork().to(device)
+
+if RESUME:
+    state_dict = torch.load(STATE_DICT_PATH)
+    model['depth_network'].load_state_dict(state_dict['depth_model_state_dict'])
+    model['pose_network'].load_state_dict(state_dict['pose_model_state_dict'])
+    epoch = state_dict['epoch']
+    loss = state_dict['loss']
+    print(f'Resuming from epoch {epoch + 1} the mean was {loss}')
 
 train_data = KittiOdom(csv_path='csv\eigen_full_train.csv', root=ROOT)
 val_data = KittiOdom(csv_path='csv\eigen_full_val.csv', root=ROOT)
@@ -87,9 +94,18 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
         loop.set_description(f"Epoch [{epoch}/{NUM_EPOCHS}]")
         loop.set_postfix(loss=loss.item())
-        
+        break
 
-    mean_loss = sum(mean_loss)/len(mean_loss)
+    mean_loss = sum(mean_loss)/len(mean_loss)    
+    if epoch%5==0:
+        state_dict = {}
+        state_dict['depth_model_state_dict'] = model['depth_network'].state_dict()
+        state_dict['pose_model_state_dict'] = model['pose_network'].state_dict()
+        state_dict['epoch'] = epoch
+        state_dict['loss'] = mean_loss
+        torch.save(state_dict, os.path.join(CKPT_DIR, f'model_epoch_{epoch}.ckpt'))
+        
+    
     writer.add_scalar("Mean Training loss", loss, global_step=epoch)
     num = random.randint(0, len(val_data))
     sample = val_data[num]
