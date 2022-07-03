@@ -26,7 +26,7 @@ class KittiOdom(Dataset):
     def __getitem__(self, index):
         sample = {}
         source = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source']))
-        target = Image.open(os.path.join(self.img_list.iloc[index]['target']))
+        target = Image.open(os.path.join(self.root, self.img_list.iloc[index]['target']))
         
         source, target = to_tensor(source), to_tensor(target)
         sample['source'] = source

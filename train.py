@@ -20,7 +20,7 @@ print('seed created')
 
 APPLY_AUG = True
 PRETRAINED = True
-
+ROOT = r"E:\Deep Learning Projects\datasets\kitti_raw"
 BATCH_SIZE = 2
 LEARNING_RATE = 1e-4
 NUM_WORKERS = 0
@@ -41,8 +41,8 @@ model = {}
 model['pose_network'] = PoseCNN(num_input_frames=2).to(device)
 model['depth_network'] = DepthNetwork().to(device)
 
-train_data = KittiOdom(csv_path='csv\eigen_full_split_train.csv')
-val_data = KittiOdom(csv_path='csv\eigen_full_split_val.csv')
+train_data = KittiOdom(csv_path='csv\eigen_full_train.csv', root=ROOT)
+val_data = KittiOdom(csv_path='csv\eigen_full_val.csv', root=ROOT)
 
 train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY)
 val_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
