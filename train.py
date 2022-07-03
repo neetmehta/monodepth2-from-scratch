@@ -27,7 +27,7 @@ NUM_WORKERS = 0
 PIN_MEMORY = True
 NUM_EPOCHS = 200
 CKPT_DIR = "ckpt"
-RESUME = True
+RESUME = False
 STATE_DICT_PATH = 'ckpt\model_epoch_0.ckpt'
 TENSORBOARD_FOLDER = 'tensorboard/runs'
 os.makedirs(CKPT_DIR, exist_ok=True)
@@ -60,7 +60,9 @@ parameters_to_train = list(model['depth_network'].parameters()) + list(model['po
 optimizer = torch.optim.Adam(parameters_to_train, lr=LEARNING_RATE)
 backproject_depth = BackprojectDepth(BATCH_SIZE, 384, 1248)
 project_3d = Project3D(BATCH_SIZE, 384, 1248)
-print(f"Number of parameters = {sum(i.numel() for i in model['depth_network'].parameters()) + sum(i.numel() for i in model['pose_network'].parameters())}")
+num_parameters = sum(i.numel() for i in model['depth_network'].parameters()) + sum(i.numel() for i in model['pose_network'].parameters())
+num_parameters = num_parameters/1e6
+print(f"Number of parameters = {num_parameters} M")
 print('Starting training')
 
 for epoch in range(start_epoch, NUM_EPOCHS):
