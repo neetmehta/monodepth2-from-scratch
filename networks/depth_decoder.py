@@ -1,14 +1,17 @@
+
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from collections import OrderedDict
-import numpy as np
 
 def upsample(x):
     """Upsample input tensor by a factor of 2
     """
     return F.interpolate(x, scale_factor=2, mode="nearest")
 
+from collections import OrderedDict
 class ConvBlock(nn.Module):
     """Layer to perform a convolution followed by ELU
     """
@@ -40,7 +43,7 @@ class Conv3x3(nn.Module):
         out = self.pad(x)
         out = self.conv(out)
         return out
-        
+
 class DepthDecoder(nn.Module):
     def __init__(self, num_ch_enc, scales=range(4), num_output_channels=1, use_skips=True):
         super(DepthDecoder, self).__init__()
@@ -74,9 +77,9 @@ class DepthDecoder(nn.Module):
         self.decoder = nn.ModuleList(list(self.convs.values()))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, input_features):
         self.outputs = {}
-        input_features = [x['x1'],x['x2'],x['x3'],x['x4'],x['x5']]
+
         # decoder
         x = input_features[-1]
         for i in range(4, -1, -1):

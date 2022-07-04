@@ -1,1 +1,0 @@
-from networks.resnet_encoder import resnet50
