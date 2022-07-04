@@ -28,6 +28,7 @@ PIN_MEMORY = True
 NUM_EPOCHS = 200
 CKPT_DIR = "ckpt"
 RESUME = False
+RESIZE = (448, 448)
 STATE_DICT_PATH = 'ckpt\model_epoch_0.ckpt'
 TENSORBOARD_FOLDER = 'tensorboard/runs'
 os.makedirs(CKPT_DIR, exist_ok=True)
@@ -48,8 +49,8 @@ if RESUME:
     loss = state_dict['loss']
     print(f'Resuming from epoch {epoch + 1} the mean was {loss}')
 
-train_data = KittiOdom(csv_path='csv\eigen_full_train.csv', root=ROOT)
-val_data = KittiOdom(csv_path='csv\eigen_full_val.csv', root=ROOT)
+train_data = KittiOdom(csv_path='csv\eigen_full_train.csv', root=ROOT, resize=RESIZE)
+val_data = KittiOdom(csv_path='csv\eigen_full_val.csv', root=ROOT, resize=RESIZE)
 
 train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY)
 val_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
@@ -58,8 +59,8 @@ start_epoch = 0
 
 parameters_to_train = list(model['depth_network'].parameters()) + list(model['pose_network'].parameters())
 optimizer = torch.optim.Adam(parameters_to_train, lr=LEARNING_RATE)
-backproject_depth = BackprojectDepth(BATCH_SIZE, 384, 1248)
-project_3d = Project3D(BATCH_SIZE, 384, 1248)
+backproject_depth = BackprojectDepth(BATCH_SIZE, RESIZE[0], RESIZE[1])
+project_3d = Project3D(BATCH_SIZE, RESIZE[0], RESIZE[1])
 num_parameters = sum(i.numel() for i in model['depth_network'].parameters()) + sum(i.numel() for i in model['pose_network'].parameters())
 num_parameters = num_parameters/1e6
 print(f"Number of parameters = {num_parameters} M")
