@@ -20,7 +20,7 @@ print('seed created')
 
 # APPLY_AUG = True
 # PRETRAINED = True
-ROOT = r"/dataset/kitti_raw_image"
+ROOT = r"../datasets/kitti_raw"
 BATCH_SIZE = 2
 LEARNING_RATE = 1e-4
 NUM_WORKERS = 0

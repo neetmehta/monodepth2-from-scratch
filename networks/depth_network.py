@@ -9,7 +9,7 @@ class DepthNetwork(nn.Module):
     def __init__(self) -> None:
         super(DepthNetwork, self).__init__()
 
-        self.decoder = DepthDecoder([64,256,512,1024,2048])
+        self.decoder = DepthDecoder([64,256,512,1024,2048], use_skips=True)
         self.encoder = resnet50()
 
     def forward(self, x):
