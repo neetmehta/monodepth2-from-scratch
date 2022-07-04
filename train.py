@@ -52,8 +52,8 @@ if RESUME:
 train_data = KittiOdom(csv_path='csv/eigen_full_train.csv', root=ROOT, resize=RESIZE)
 val_data = KittiOdom(csv_path='csv/eigen_full_val.csv', root=ROOT, resize=RESIZE)
 
-train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY)
-val_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
+train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY, drop_last=True)
+val_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, drop_last=True)
 start_epoch = 0
 
 
