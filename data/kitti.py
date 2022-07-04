@@ -13,10 +13,11 @@ class KittiOdom(Dataset):
 
         self.root = root
         self.img_list = pd.read_csv(csv_path)
-        self.K = np.array([[0.576, 0, 0.4865, 0],
-                           [0, 1.872, 0.4823, 0],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 1]], dtype=np.float32)
+        self.K = np.array([[718.856/resize[1], 0,                 607.1928/resize[1], 0],
+                           [0,                 718.856/resize[0], 607.1928/resize[0], 0],
+                           [0,                 0,                 1,                  0],
+                           [0,                 0,                 0,                  1]], dtype=np.float32)
+
 
         self.inv_k = np.linalg.pinv(self.K)
         self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
@@ -42,6 +43,13 @@ class KittiStereo(Dataset):
         super(KittiStereo, self).__init__()
         self.root = root
         self.img_list = pd.read_csv(csv_path)
+        self.K = np.array([[718.856/resize[1], 0,                 607.1928/resize[1], 0],
+                           [0,                 718.856/resize[0], 607.1928/resize[0], 0],
+                           [0,                 0,                 1,                  0],
+                           [0,                 0,                 0,                  1]], dtype=np.float32)
+
+
+        self.inv_k = np.linalg.pinv(self.K)
         self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
 
     def __len__(self):
@@ -57,4 +65,6 @@ class KittiStereo(Dataset):
         source, target = self.to_tensor(source), self.to_tensor(target)
         sample['source'] = source
         sample['target'] = target
+        sample['inv_K'] = torch.from_numpy(self.inv_k)
+        sample['K'] = torch.from_numpy(self.K)
         return sample
