@@ -18,8 +18,9 @@ def make_csv(split_path, split_name='eigen_full_train'):
         img_dict = {}
         for i in list1:
             path, num, pos = i.split()
-            path.replace('/','\\')
-            img_path = osp(path, f"image_02\\data\\{num_parser(num)}.png")
+            # path.replace('/','\\')
+            img_path = osp(path, f"image_02/data/{num_parser(num)}.png").replace('\\','/')
+
             if path not in img_dict:
                 img_dict[path] = []
 
@@ -32,7 +33,7 @@ def make_csv(split_path, split_name='eigen_full_train'):
         img_dict[key].sort()
 
         for i in range(len(img_dict[key])-1):
-            sample = [osp(key,f"image_02\\data\\{num_parser(img_dict[key][i])}.png"), osp(key,f"image_02\\data\\{num_parser(img_dict[key][i+1])}.png")]
+            sample = [osp(key,f"image_02/data/{num_parser(img_dict[key][i])}.png").replace('\\','/'), osp(key,f"image_02/data/{num_parser(img_dict[key][i+1])}.png").replace('\\','/')]
             sample_list.append(sample)
 
     dataframe = pd.DataFrame(columns=['target', 'source'], data=sample_list)
