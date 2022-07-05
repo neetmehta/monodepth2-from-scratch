@@ -9,7 +9,7 @@ from data.kitti import KittiOdom
 from networks.pose_network import PoseCNN
 from networks.depth_network import DepthNetwork
 from loss.loss import *
-
+from utils import normalize_image
 
 import random
 
@@ -32,6 +32,7 @@ RESUME = False
 RESIZE = (192, 640)
 STATE_DICT_PATH = 'ckpt\model_epoch_0.ckpt'
 TENSORBOARD_FOLDER = 'tensorboard/runs'
+LOGGING = True
 os.makedirs(CKPT_DIR, exist_ok=True)
 os.makedirs(TENSORBOARD_FOLDER, exist_ok=True)
 
@@ -109,12 +110,24 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         ## total loss
         loss = reproj_loss + smooth_loss
 
-        writer.add_scalar("Training loss", loss, global_step=i)
-
+        ## Training batch
         mean_loss.append(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        ## Tensorboard logging
+        if LOGGING:
+            for j in range(min(4,BATCH_SIZE)):
+                writer.add_scalar("Training loss", loss, global_step=i)
+
+                writer.add_image("Train/source", source[j].data, global_step=i)
+                writer.add_image("Train/target", target[j].data, global_step=i)
+                writer.add_image("Train/reprojected_image", pred_recons_image[j].data, global_step=i)
+                writer.add_image("Train/disparity", normalize_image(disp_0[j]), global_step=i)
+                
+
+
 
         loop.set_description(f"Epoch [{epoch}/{NUM_EPOCHS}]")
         loop.set_postfix(loss=loss.item())
