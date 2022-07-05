@@ -117,7 +117,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         optimizer.step()
 
         ## Tensorboard logging
-        if LOGGING:
+        if LOGGING and i%100==0:
             for j in range(min(4,BATCH_SIZE)):
                 writer.add_scalar("Training loss", loss, global_step=i)
 
