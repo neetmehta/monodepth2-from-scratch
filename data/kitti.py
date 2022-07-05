@@ -13,11 +13,14 @@ class KittiOdom(Dataset):
 
         self.root = root
         self.img_list = pd.read_csv(csv_path)
-        self.K = np.array([[718.856/resize[1], 0,                 607.1928/resize[1], 0],
-                           [0,                 718.856/resize[0], 607.1928/resize[0], 0],
-                           [0,                 0,                 1,                  0],
-                           [0,                 0,                 0,                  1]], dtype=np.float32)
+        self.K = np.array([[707.0912/1242, 0,            601.8873/1242, 0],
+                           [0,             707.0912/375, 183.1104/375,  0],
+                           [0,             0,            1,             0],
+                           [0,             0,            0,             1]], dtype=np.float32)
 
+        self.K[0, :] *= resize[1]
+        self.K[1, :] *= resize[0]
+        print(self.K)
 
         self.inv_k = np.linalg.pinv(self.K)
         self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
@@ -43,10 +46,14 @@ class KittiStereo(Dataset):
         super(KittiStereo, self).__init__()
         self.root = root
         self.img_list = pd.read_csv(csv_path)
-        self.K = np.array([[718.856/resize[1], 0,                 607.1928/resize[1], 0],
-                           [0,                 718.856/resize[0], 607.1928/resize[0], 0],
-                           [0,                 0,                 1,                  0],
-                           [0,                 0,                 0,                  1]], dtype=np.float32)
+        self.K = np.array([[707.0912/1242, 0,            601.8873/1242, 0],
+                           [0,             707.0912/375, 183.1104/375,  0],
+                           [0,             0,            1,             0],
+                           [0,             0,            0,             1]], dtype=np.float32)
+
+        self.K[0, :] *= resize[1]
+        self.K[1, :] *= resize[0]
+        print(self.K)
 
 
         self.inv_k = np.linalg.pinv(self.K)
