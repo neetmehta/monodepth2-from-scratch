@@ -20,6 +20,7 @@ print('seed created')
 
 # APPLY_AUG = True
 # PRETRAINED = True
+DISPARITY_SMOOTHNESS = 1e-3
 ROOT = r"../datasets/kitti_raw"
 BATCH_SIZE = 2
 LEARNING_RATE = 1e-4
@@ -72,22 +73,42 @@ for epoch in range(start_epoch, NUM_EPOCHS):
     model['depth_network'].train()
     for i, sample in enumerate(loop):
 
+        ## Input to cuda
         source, target = sample['source'].to(device), sample['target'].to(device)
         K, inv_K = sample['K'].to(device), sample['inv_K'].to(device)
-        depth = model['depth_network'](target)
-        depth = depth[('disp',0)]
+
+        ## disparity prediction
+        disp = model['depth_network'](target)
+        disp_0 = disp[('disp',0)]      # Full scale disparity image
+
+        ## disp to depth
+        _, depth = disp_to_depth(disp_0, 0.1, 100)
         inv_depth = 1 / depth
         mean_inv_depth = inv_depth.mean(3, True).mean(2, True)
+
+        ## Pose estimation
         axisangle, translation = model['pose_network'](torch.cat((source, target), dim=1))
         T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0])
-        _, depth = disp_to_depth(depth, 0.1, 100)
+        
+        ## reprojection
         cam_points = backproject_depth(depth, inv_K)
         pix_coords = project_3d(cam_points, K, T)
-
         pred_recons_image = F.grid_sample(source, pix_coords, padding_mode="border")
 
-        loss = compute_reprojection_loss(pred_recons_image, source)
-        loss = loss.mean()
+        ## reprojection loss
+        reproj_loss = compute_reprojection_loss(pred_recons_image, source)
+        reproj_loss = reproj_loss.mean()
+        
+
+        ## smooth loss
+        mean_disp = disp_0.mean(2, True).mean(3, True)
+        norm_disp = disp_0 / (mean_disp + 1e-7)
+        smooth_loss = get_smooth_loss(norm_disp, source)
+        smooth_loss = DISPARITY_SMOOTHNESS * smooth_loss
+
+        ## total loss
+        loss = reproj_loss + smooth_loss
+
         writer.add_scalar("Training loss", loss, global_step=i)
 
         mean_loss.append(loss.item())

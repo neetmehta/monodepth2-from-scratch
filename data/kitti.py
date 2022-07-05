@@ -20,7 +20,6 @@ class KittiOdom(Dataset):
 
         self.K[0, :] *= resize[1]
         self.K[1, :] *= resize[0]
-        print(self.K)
 
         self.inv_k = np.linalg.pinv(self.K)
         self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
@@ -53,8 +52,6 @@ class KittiStereo(Dataset):
 
         self.K[0, :] *= resize[1]
         self.K[1, :] *= resize[0]
-        print(self.K)
-
 
         self.inv_k = np.linalg.pinv(self.K)
         self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
