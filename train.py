@@ -18,8 +18,6 @@ torch.manual_seed(123)
 print('seed created')
 
 
-# APPLY_AUG = True
-# PRETRAINED = True
 DISPARITY_SMOOTHNESS = 1e-3
 ROOT = r"../datasets/kitti_raw"
 BATCH_SIZE = 2
@@ -68,6 +66,7 @@ num_parameters = num_parameters/1e6
 print(f"Number of parameters = {num_parameters} M")
 print('Starting training')
 step = 0
+curr_mean_loss = 10
 
 for epoch in range(start_epoch, NUM_EPOCHS):
     loop = tqdm(train_loader)
@@ -171,13 +170,14 @@ for epoch in range(start_epoch, NUM_EPOCHS):
     print('\n===================================')
     print(f"Mean loss is {mean_loss} for epoch {epoch}")
     print('===================================\n')
-    if epoch%5==0:
+    if curr_mean_loss>mean_loss or epoch%5==0:
         state_dict = {}
         state_dict['depth_model_state_dict'] = model['depth_network'].state_dict()
         state_dict['pose_model_state_dict'] = model['pose_network'].state_dict()
         state_dict['epoch'] = epoch
         state_dict['loss'] = mean_loss
         torch.save(state_dict, os.path.join(CKPT_DIR, f'model_epoch_{epoch}.ckpt'))
+        curr_mean_loss = mean_loss
         
     
     writer.add_scalar("Mean Training loss", loss, global_step=epoch)
