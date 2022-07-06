@@ -29,11 +29,13 @@ class KittiOdom(Dataset):
 
     def __getitem__(self, index):
         sample = {}
-        source = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source']))
+        source_1 = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source_1']))
+        source_minus_1 = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source_minus_1']))
         target = Image.open(os.path.join(self.root, self.img_list.iloc[index]['target']))
         
-        source, target = self.to_tensor(source), self.to_tensor(target)
-        sample['source'] = source
+        source_1, source_minus_1, target = self.to_tensor(source_1), self.to_tensor(source_minus_1), self.to_tensor(target)
+        sample['source_1'] = source_1
+        sample['source_minus_1'] = source_minus_1
         sample['target'] = target
         sample['inv_K'] = torch.from_numpy(self.inv_k)
         sample['K'] = torch.from_numpy(self.K)

@@ -33,10 +33,12 @@ def make_csv(split_path, split_name='eigen_full_train'):
         img_dict[key].sort()
 
         for i in range(len(img_dict[key])-1):
-            sample = [osp(key,f"image_02/data/{num_parser(img_dict[key][i])}.png").replace('\\','/'), osp(key,f"image_02/data/{num_parser(img_dict[key][i+1])}.png").replace('\\','/')]
+            sample = [osp(key,f"image_02/data/{num_parser(img_dict[key][i])}.png").replace('\\','/'), 
+                      osp(key,f"image_02/data/{num_parser(img_dict[key][i]-1)}.png").replace('\\','/'), 
+                      osp(key,f"image_02/data/{num_parser(img_dict[key][i]+1)}.png").replace('\\','/')]
             sample_list.append(sample)
 
-    dataframe = pd.DataFrame(columns=['target', 'source'], data=sample_list)
+    dataframe = pd.DataFrame(columns=['target', 'source_minus_1', 'source_1'], data=sample_list)
     dataframe.to_csv(f'{split_name}.csv')
 
             
