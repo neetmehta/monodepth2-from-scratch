@@ -168,6 +168,9 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         loop.set_postfix(loss=loss.item())
 
     mean_loss = sum(mean_loss)/len(mean_loss)    
+    print('\n===================================')
+    print(f"Mean loss is {mean_loss} for epoch {epoch}")
+    print('===================================\n')
     if epoch%5==0:
         state_dict = {}
         state_dict['depth_model_state_dict'] = model['depth_network'].state_dict()
