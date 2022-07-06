@@ -165,7 +165,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
         loop.set_description(f"Epoch [{epoch}/{NUM_EPOCHS}]")
         loop.set_postfix(loss=loss.item())
-        break
+
 
     mean_loss = sum(mean_loss)/len(mean_loss)    
     print('\n===================================')
