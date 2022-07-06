@@ -165,6 +165,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
         loop.set_description(f"Epoch [{epoch}/{NUM_EPOCHS}]")
         loop.set_postfix(loss=loss.item())
+        break
 
     mean_loss = sum(mean_loss)/len(mean_loss)    
     print('\n===================================')
@@ -186,7 +187,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
     image = sample['target'].unsqueeze(0).to(device)
     model['depth_network'].eval()
 
-    with torch.no_grad:
+    with torch.no_grad():
         disp = model['depth_network'](image)
         disp_0 = disp[('disp',0)]      # Full scale disparity image
 
@@ -197,7 +198,9 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         depth = depth.cpu().detach()
         inv_depth = inv_depth.cpu().detach()
 
+
     writer.add_image("val/image", inv_depth[0].data, global_step=epoch)
+    writer.add_image("val/disparity", normalize_image(disp_0[0].data), global_step=epoch)
     writer.add_image("val/depth", normalize_image(depth[0]), global_step=epoch)
     writer.add_image("val/inv_depth", normalize_image(inv_depth[0]), global_step=epoch)
 
