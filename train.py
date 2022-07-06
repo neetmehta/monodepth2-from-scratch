@@ -159,7 +159,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
                 writer.add_image("Train/depth", normalize_image(depth[j]), global_step=step)
                 writer.add_image("Train/inv_depth", normalize_image(inv_depth[j]), global_step=step)
 
-            step += 1
+        step += 1
                 
 
 
