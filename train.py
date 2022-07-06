@@ -49,8 +49,8 @@ if RESUME:
     loss = state_dict['loss']
     print(f'Resuming from epoch {epoch + 1} the mean was {loss}')
 
-train_data = KittiOdom(csv_path='csv/eigen_full_train.csv', root=ROOT, resize=RESIZE)
-val_data = KittiOdom(csv_path='csv/eigen_full_val.csv', root=ROOT, resize=RESIZE)
+train_data = KittiOdom(csv_path='csv/eigen_zhou_train.csv', root=ROOT, resize=RESIZE)
+val_data = KittiOdom(csv_path='csv/eigen_zhou_val.csv', root=ROOT, resize=RESIZE)
 
 train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY, drop_last=True)
 val_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, drop_last=True)
@@ -199,7 +199,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         inv_depth = inv_depth.cpu().detach()
 
 
-    writer.add_image("val/image", inv_depth[0].data, global_step=epoch)
+    writer.add_image("val/image", image[0].data, global_step=epoch)
     writer.add_image("val/disparity", normalize_image(disp_0[0].data), global_step=epoch)
     writer.add_image("val/depth", normalize_image(depth[0]), global_step=epoch)
     writer.add_image("val/inv_depth", normalize_image(inv_depth[0]), global_step=epoch)
