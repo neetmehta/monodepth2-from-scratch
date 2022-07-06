@@ -197,6 +197,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         depth = depth.cpu().detach()
         inv_depth = inv_depth.cpu().detach()
 
-    writer.add_image("val/depth", normalize_image(depth[j]), global_step=epoch)
-    writer.add_image("val/inv_depth", normalize_image(inv_depth[j]), global_step=epoch)
+    writer.add_image("val/image", inv_depth[0].data, global_step=epoch)
+    writer.add_image("val/depth", normalize_image(depth[0]), global_step=epoch)
+    writer.add_image("val/inv_depth", normalize_image(inv_depth[0]), global_step=epoch)
 
