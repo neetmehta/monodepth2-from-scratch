@@ -26,18 +26,18 @@ Root
 # Results
 1.
 <p align="center">
-  <img src="reesults/image.png" alt="example input output gif" width="600" />
+  <img src="results/image.png" alt="example input image" width="600" />
 </p>
 <p align="center">
-  <img src="reesults/depth.png" alt="example input output gif" width="600" />
+  <img src="results/depth.png" alt="example output depth" width="600" />
 </p>
 
 2.
 <p align="center">
-  <img src="reesults/image_2.png" alt="example input output gif" width="600" />
+  <img src="results/image_2.png" alt="example input image" width="600" />
 </p>
 <p align="center">
-  <img src="reesults/depth_2.png" alt="example input output gif" width="600" />
+  <img src="results/depth_2.png" alt="example output depth" width="600" />
 </p>
 
 
