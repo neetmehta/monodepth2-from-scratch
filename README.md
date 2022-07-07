@@ -10,32 +10,19 @@ This model was trained on Kitti-raw dataset. I used Eigen split used by Zhou et.
 
 Root  
 ├───2011_09_26  
-│   ├───2011_09_26_drive_0001_sync  
-│   │   ├───image_00  
-│   │   │   └───data  
-│   │   ├───image_01  
-│   │   │   └───data  
+│   ├───2011_09_26_drive_0001_sync   
 │   │   ├───image_02  
 │   │   │   └───data  
 │   │   ├───image_03  
 │   │   │   └───data  
-│   │   ├───oxts  
-│   │   │   └───data  
-│   │   └───velodyne_points  
-│   │       └───data  
-│   ├───2011_09_26_drive_0002_sync  
-│   │   ├───image_00  
-│   │   │   └───data  
-│   │   ├───image_01  
-│   │   │   └───data  
+.  
+.  
+│   ├───2011_10_03_drive_0058_sync      
 │   │   ├───image_02  
 │   │   │   └───data  
 │   │   ├───image_03  
 │   │   │   └───data  
-│   │   ├───oxts  
-│   │   │   └───data  
-│   │   └───velodyne_points  
-│   │       └───data  
+
 
 
 # Original authors and paper:
