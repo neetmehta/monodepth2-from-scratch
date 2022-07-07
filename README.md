@@ -1,10 +1,17 @@
-# monodepth2-from-scratch
+# Monodepth2-from-scratch
 
 This my simplified re-implementation of monodepth2 in pytorch
 
 Monodepth2 is self-supervised depth estimation network.
 
 This model was trained on Kitti-raw dataset. I used Eigen split used by Zhou et.al.
+
+## Requirements
+
+```
+pytorch=1.11.0+cu113
+tensorboard=2.7.0
+```
 
 ## Dataset format
 
