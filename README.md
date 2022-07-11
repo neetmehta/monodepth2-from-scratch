@@ -49,10 +49,10 @@ Root
 
 ## Tensorboard outputs
 <p align="center">
-  <img src="results/tensorboard outputs.png" alt="example input image" width="600" />
+  <img src="tensorboard outputs.png" alt="example input image" width="600" />
 </p>
 <p align="center">
-  <img src="results/tensorboard outputs 2.png" alt="example output depth" width="600" />
+  <img src="tensorboard outputs 2.png" alt="example output depth" width="600" />
 </p>
 
 
