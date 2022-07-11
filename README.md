@@ -55,6 +55,18 @@ Root
   <img src="tensorboard outputs 2.png" alt="example output depth" width="600" />
 </p>
 
+<p align="center">
+  <img src="tensorboard/3.png" alt="example output depth" width="600" />
+</p>
+
+<p align="center">
+  <img src="tensorboard/4.png" alt="example output depth" width="600" />
+</p>
+
+<p align="center">
+  <img src="tensorboard/5.png" alt="example output depth" width="600" />
+</p>
+
 
 
 
