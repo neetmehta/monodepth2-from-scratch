@@ -1,4 +1,5 @@
 from logging import root
+from typing import OrderedDict
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
@@ -19,10 +20,10 @@ print('seed created')
 
 
 DISPARITY_SMOOTHNESS = 1e-3
-ROOT = r"../datasets/kitti_raw"
-BATCH_SIZE = 2
+ROOT = r"/dataset/kitti_raw_image"
+BATCH_SIZE = 16
 LEARNING_RATE = 1e-4
-NUM_WORKERS = 0
+NUM_WORKERS = 4
 PIN_MEMORY = True
 NUM_EPOCHS = 200
 CKPT_DIR = "ckpt"
@@ -31,6 +32,7 @@ RESIZE = (192, 640)
 STATE_DICT_PATH = 'ckpt\model_epoch_0.ckpt'
 TENSORBOARD_FOLDER = 'tensorboard/runs'
 LOGGING = True
+scales = [0,1,2,3]
 
 USE_MULTISCALE_LOSS = True
 os.makedirs(CKPT_DIR, exist_ok=True)
@@ -61,15 +63,19 @@ start_epoch = 0
 
 parameters_to_train = list(model['depth_network'].parameters()) + list(model['pose_network'].parameters())
 optimizer = torch.optim.Adam(parameters_to_train, lr=LEARNING_RATE)
-backproject_depth = BackprojectDepth(BATCH_SIZE, RESIZE[0], RESIZE[1])
-project_3d = Project3D(BATCH_SIZE, RESIZE[0], RESIZE[1])
+backproject_depth = OrderedDict()
+project_3d = OrderedDict()
+
+for i in scales:
+    backproject_depth[i] = BackprojectDepth(BATCH_SIZE, RESIZE[0]/(2**i), RESIZE[1]/(2**i))
+    project_3d[i] = Project3D(BATCH_SIZE, RESIZE[0]/(2**i), RESIZE[1]/(2**i))
 num_parameters = sum(i.numel() for i in model['depth_network'].parameters()) + sum(i.numel() for i in model['pose_network'].parameters())
 num_parameters = num_parameters/1e6
 print(f"Number of parameters = {num_parameters} M")
 print('Starting training')
 step = 0
 curr_mean_loss = 10
-scales = [0,1,2,3]
+
 
 for epoch in range(start_epoch, NUM_EPOCHS):
     loop = tqdm(train_loader)
@@ -108,13 +114,13 @@ for epoch in range(start_epoch, NUM_EPOCHS):
             
             ## reprojection
             #  -1
-            cam_points = backproject_depth(depth, inv_K)
-            pix_coords = project_3d(cam_points, K, poses['-1'])
+            cam_points = backproject_depth[i](depth, inv_K)
+            pix_coords = project_3d[i](cam_points, K, poses['-1'])
             pred_recons_image_minus_1 = F.grid_sample(source_minus_1, pix_coords, padding_mode="border")
 
             #  +1
-            cam_points = backproject_depth(depth, inv_K)
-            pix_coords = project_3d(cam_points, K, poses['1'])
+            cam_points = backproject_depth[i](depth, inv_K)
+            pix_coords = project_3d[i](cam_points, K, poses['1'])
             pred_recons_image_1 = F.grid_sample(source_1, pix_coords, padding_mode="border")
 
             ## reprojection loss
