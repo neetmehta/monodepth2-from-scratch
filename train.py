@@ -21,9 +21,9 @@ print('seed created')
 
 DISPARITY_SMOOTHNESS = 1e-3
 ROOT = r"/dataset/kitti_raw_image"
-BATCH_SIZE = 16
+BATCH_SIZE = 24
 LEARNING_RATE = 1e-4
-NUM_WORKERS = 4
+NUM_WORKERS = 2
 PIN_MEMORY = True
 NUM_EPOCHS = 200
 CKPT_DIR = "ckpt"
