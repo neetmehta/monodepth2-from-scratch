@@ -184,7 +184,6 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
         loop.set_description(f"Epoch [{epoch}/{NUM_EPOCHS}]")
         loop.set_postfix(loss=total_loss.item())
-        break
 
 
 
