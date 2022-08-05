@@ -86,20 +86,18 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         total_loss = 0
         target = sample[('target',0)].to(device)
         disp = model['depth_network'](target)
-
+        depth = {}
+        inv_depth = {}
         for i in scales:
             
             ## Input to cuda
             source_1, source_minus_1, target = sample[('source_1', i)].to(device), sample[('source_minus_1', i)].to(device), sample[('target', i)].to(device) 
             K, inv_K = sample[('K', i)].to(device), sample[('inv_K', i)].to(device)
 
-            ## disparity prediction
-            disp_0 = disp[('disp', i)]      # Full scale disparity image
-
             ## disp to depth
-            _, depth = disp_to_depth(disp_0, 0.1, 100)
-            inv_depth = 1 / depth
-            mean_inv_depth = inv_depth.mean(3, True).mean(2, True)
+            _, depth[i] = disp_to_depth(disp[('disp', i)], 0.1, 100)
+            inv_depth[i] = 1 / depth[i]
+            mean_inv_depth = inv_depth[i].mean(3, True).mean(2, True)
 
             ## Pose estimation
             poses = {}
@@ -113,12 +111,12 @@ for epoch in range(start_epoch, NUM_EPOCHS):
             
             ## reprojection
             #  -1
-            cam_points = backproject_depth[i](depth, inv_K)
+            cam_points = backproject_depth[i](depth[i], inv_K)
             pix_coords = project_3d[i](cam_points, K, poses['-1'])
             pred_recons_image_minus_1 = F.grid_sample(source_minus_1, pix_coords, padding_mode="border")
 
             #  +1
-            cam_points = backproject_depth[i](depth, inv_K)
+            cam_points = backproject_depth[i](depth[i], inv_K)
             pix_coords = project_3d[i](cam_points, K, poses['1'])
             pred_recons_image_1 = F.grid_sample(source_1, pix_coords, padding_mode="border")
 
@@ -145,8 +143,8 @@ for epoch in range(start_epoch, NUM_EPOCHS):
             
 
             ## smooth loss
-            mean_disp = disp_0.mean(2, True).mean(3, True)
-            norm_disp = disp_0 / (mean_disp + 1e-7)
+            mean_disp = disp[('disp', i)].mean(2, True).mean(3, True)
+            norm_disp = disp[('disp', i)] / (mean_disp + 1e-7)
             smooth_loss = get_smooth_loss(norm_disp, target)
             smooth_loss = DISPARITY_SMOOTHNESS * smooth_loss
 
@@ -169,9 +167,9 @@ for epoch in range(start_epoch, NUM_EPOCHS):
                 writer.add_image("Train/target", target[j].data, global_step=step)
                 writer.add_image("Train/reprojected_image from -1", pred_recons_image_minus_1[j].data, global_step=step)
                 writer.add_image("Train/reprojected_image from +1", pred_recons_image_1[j].data, global_step=step)
-                writer.add_image("Train/disparity", normalize_image(disp_0[j]), global_step=step)
-                writer.add_image("Train/depth", normalize_image(depth[j]), global_step=step)
-                writer.add_image("Train/inv_depth", normalize_image(inv_depth[j]), global_step=step)
+                writer.add_image("Train/disparity", normalize_image(disp[('disp', 0)][j]), global_step=step)
+                writer.add_image("Train/depth", normalize_image(depth[j][0]), global_step=step)
+                writer.add_image("Train/inv_depth", normalize_image(inv_depth[j][0]), global_step=step)
 
         step += 1
                 
@@ -204,10 +202,10 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
     with torch.no_grad():
         disp = model['depth_network'](image)
-        disp_0 = disp[('disp',0)]      # Full scale disparity image
+        disp[('disp', i)] = disp[('disp',0)]      # Full scale disparity image
 
         ## disp to depth
-        _, depth = disp_to_depth(disp_0, 0.1, 100)
+        _, depth = disp_to_depth(disp[('disp', i)], 0.1, 100)
         inv_depth = 1 / depth
 
         depth = depth.cpu().detach()
@@ -215,7 +213,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
 
     writer.add_image("val/image", image[0].data, global_step=epoch)
-    writer.add_image("val/disparity", normalize_image(disp_0[0].data), global_step=epoch)
+    writer.add_image("val/disparity", normalize_image(disp[('disp', i)][0].data), global_step=epoch)
     writer.add_image("val/depth", normalize_image(depth[0]), global_step=epoch)
     writer.add_image("val/inv_depth", normalize_image(inv_depth[0]), global_step=epoch)
 
