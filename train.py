@@ -67,8 +67,8 @@ backproject_depth = OrderedDict()
 project_3d = OrderedDict()
 
 for i in scales:
-    backproject_depth[i] = BackprojectDepth(BATCH_SIZE, RESIZE[0]/(2**i), RESIZE[1]/(2**i))
-    project_3d[i] = Project3D(BATCH_SIZE, RESIZE[0]/(2**i), RESIZE[1]/(2**i))
+    backproject_depth[i] = BackprojectDepth(BATCH_SIZE, RESIZE[0]//(2**i), RESIZE[1]//(2**i))
+    project_3d[i] = Project3D(BATCH_SIZE, RESIZE[0]//(2**i), RESIZE[1]//(2**i))
 num_parameters = sum(i.numel() for i in model['depth_network'].parameters()) + sum(i.numel() for i in model['pose_network'].parameters())
 num_parameters = num_parameters/1e6
 print(f"Number of parameters = {num_parameters} M")
@@ -84,7 +84,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
     for i, sample in enumerate(loop):
         total_loss = 0
-        target = sample['target'].to(device)
+        target = sample[('target',0)].to(device)
         disp = model['depth_network'](target)
 
         for i in scales:
@@ -104,11 +104,11 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
             ## Pose estimation
             poses = {}
-            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, target), dim=1))
+            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, sample[('target', i)]), dim=1))
             T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=True)
             poses['-1'] = T
 
-            axisangle, translation = model['pose_network'](torch.cat((target, source_1), dim=1))
+            axisangle, translation = model['pose_network'](torch.cat((sample[('target', i)], source_1), dim=1))
             T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=False)
             poses['1'] = T
             
