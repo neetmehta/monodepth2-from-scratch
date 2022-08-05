@@ -150,7 +150,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
             total_loss += loss
 
         ## Training batch
-        mean_loss.append(loss.item())
+        mean_loss.append(total_loss.item())
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
@@ -158,7 +158,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         ## Tensorboard logging
         if LOGGING and step%100==0:
             for j in range(min(4,BATCH_SIZE)):
-                writer.add_scalar("Training loss", loss, global_step=step)
+                writer.add_scalar("Training loss", total_loss, global_step=step)
                 writer.add_image("Train/source_minus_1", source_minus_1[j].data, global_step=step)
                 writer.add_image("Train/source_1", source_1[j].data, global_step=step)
                 writer.add_image("Train/target", target[j].data, global_step=step)
@@ -174,7 +174,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
 
         loop.set_description(f"Epoch [{epoch}/{NUM_EPOCHS}]")
-        loop.set_postfix(loss=loss.item())
+        loop.set_postfix(loss=total_loss.item())
 
 
     mean_loss = sum(mean_loss)/len(mean_loss)    
@@ -191,7 +191,7 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         curr_mean_loss = mean_loss
         
     
-    writer.add_scalar("Mean Training loss", loss, global_step=epoch)
+    writer.add_scalar("Mean Training loss", total_loss, global_step=epoch)
     num = random.randint(0, len(val_data))
     sample = val_data[num]
     image = sample['target'].unsqueeze(0).to(device)
