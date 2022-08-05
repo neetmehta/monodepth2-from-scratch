@@ -84,10 +84,18 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
     for i, sample in enumerate(loop):
         total_loss = 0
-        target = sample[('target',0)].to(device)
-        disp = model['depth_network'](target)
         depth = {}
         inv_depth = {}
+        axisangle = {}
+        translation = {}
+
+        # Depth prediction 
+        target = sample[('target',0)].to(device)
+        disp = model['depth_network'](target)
+        source_minus_1, source_1 = sample[('source_minus_1', 0)].to(device), sample[('source_1', 0)].to(device)
+        # Pose prediction
+        axisangle[-1], translation[-1] = model['pose_network'](torch.cat((source_minus_1, target), dim=1))
+        axisangle[1], translation[1] = model['pose_network'](torch.cat((target, source_1), dim=1))
         for i in scales:
             
             ## Input to cuda
@@ -101,12 +109,10 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
             ## Pose estimation
             poses = {}
-            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, target), dim=1))
-            T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=True)
+            T = transformation_from_parameters(axisangle[-1][:,0], translation[-1][:,0]* mean_inv_depth[:, 0], invert=True)
             poses['-1'] = T
 
-            axisangle, translation = model['pose_network'](torch.cat((target, source_1), dim=1))
-            T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=False)
+            T = transformation_from_parameters(axisangle[1][:,0], translation[1][:,0]* mean_inv_depth[:, 0], invert=False)
             poses['1'] = T
             
             ## reprojection
