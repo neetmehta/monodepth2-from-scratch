@@ -39,7 +39,7 @@ class KittiOdom(Dataset):
         for i in self.scales:
             sample[('source_1', i)] = source_1/(2**i)
             sample[('source_minus_1', i)] = source_minus_1/(2**i)
-            sample[('target', i)] = target/(2**i)
+            sample[('target')] = target
             sample[('K', i)] = torch.from_numpy(self.K)/(2**i)
             sample[('inv_K', i)] = np.linalg.pinv(sample[('K', i)])
         return sample
