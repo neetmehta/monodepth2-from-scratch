@@ -104,11 +104,11 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
             ## Pose estimation
             poses = {}
-            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, sample[('target', i)]), dim=1))
+            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, sample[('target', i).to(device)]), dim=1))
             T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=True)
             poses['-1'] = T
 
-            axisangle, translation = model['pose_network'](torch.cat((sample[('target', i)], source_1), dim=1))
+            axisangle, translation = model['pose_network'](torch.cat((sample[('target', i)].to(device), source_1), dim=1))
             T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=False)
             poses['1'] = T
             
