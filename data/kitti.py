@@ -1,4 +1,5 @@
 import pandas as pd
+from collections import OrderedDict
 import os
 from PIL import Image
 from torchvision.transforms import transforms
@@ -8,7 +9,7 @@ from torch.utils.data import Dataset
 to_tensor = transforms.Compose([transforms.Resize((384, 1248)), transforms.ToTensor()])
 class KittiOdom(Dataset):
 
-    def __init__(self, csv_path, root, resize=(384,1248)) -> None:
+    def __init__(self, csv_path, root, resize=(384,1248), scales = [0,1,2,3]) -> None:
         super(KittiOdom, self).__init__()
 
         self.root = root
@@ -23,22 +24,24 @@ class KittiOdom(Dataset):
 
         self.inv_k = np.linalg.pinv(self.K)
         self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
+        self.scales = scales
 
     def __len__(self):
         return len(self.img_list)
 
     def __getitem__(self, index):
-        sample = {}
+        sample = OrderedDict()
         source_1 = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source_1']))
         source_minus_1 = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source_minus_1']))
         target = Image.open(os.path.join(self.root, self.img_list.iloc[index]['target']))
         
         source_1, source_minus_1, target = self.to_tensor(source_1), self.to_tensor(source_minus_1), self.to_tensor(target)
-        sample['source_1'] = source_1
-        sample['source_minus_1'] = source_minus_1
-        sample['target'] = target
-        sample['inv_K'] = torch.from_numpy(self.inv_k)
-        sample['K'] = torch.from_numpy(self.K)
+        for i in self.scales:
+            sample[('source_1', i)] = source_1/(2**i)
+            sample[('source_minus_1', i)] = source_minus_1/(2**i)
+            sample[('target', i)] = target/(2**i)
+            sample[('K', i)] = torch.from_numpy(self.K)/(2**i)
+            sample[('inv_K', i)] = np.linalg.pinv(sample[('K', i)])
         return sample
 
 class KittiStereo(Dataset):

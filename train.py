@@ -31,6 +31,8 @@ RESIZE = (192, 640)
 STATE_DICT_PATH = 'ckpt\model_epoch_0.ckpt'
 TENSORBOARD_FOLDER = 'tensorboard/runs'
 LOGGING = True
+
+USE_MULTISCALE_LOSS = True
 os.makedirs(CKPT_DIR, exist_ok=True)
 os.makedirs(TENSORBOARD_FOLDER, exist_ok=True)
 
@@ -67,82 +69,90 @@ print(f"Number of parameters = {num_parameters} M")
 print('Starting training')
 step = 0
 curr_mean_loss = 10
+scales = [0,1,2,3]
 
 for epoch in range(start_epoch, NUM_EPOCHS):
     loop = tqdm(train_loader)
     mean_loss = []
     model['depth_network'].train()
+
     for i, sample in enumerate(loop):
-
-        ## Input to cuda
-        source_1, source_minus_1, target = sample['source_1'].to(device), sample['source_minus_1'].to(device), sample['target'].to(device)
-        K, inv_K = sample['K'].to(device), sample['inv_K'].to(device)
-
-        ## disparity prediction
+        total_loss = 0
+        target = sample['target'].to(device)
         disp = model['depth_network'](target)
-        disp_0 = disp[('disp',0)]      # Full scale disparity image
 
-        ## disp to depth
-        _, depth = disp_to_depth(disp_0, 0.1, 100)
-        inv_depth = 1 / depth
-        mean_inv_depth = inv_depth.mean(3, True).mean(2, True)
+        for i in scales:
+            
+            ## Input to cuda
+            source_1, source_minus_1 = sample[('source_1', i)].to(device), sample[('source_minus_1', i)].to(device) 
+            K, inv_K = sample[('K', i)].to(device), sample[('inv_K', i)].to(device)
 
-        ## Pose estimation
-        poses = {}
-        axisangle, translation = model['pose_network'](torch.cat((source_minus_1, target), dim=1))
-        T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=True)
-        poses['-1'] = T
+            ## disparity prediction
+            disp = model['depth_network'](target)
+            disp_0 = disp[('disp',i)]      # Full scale disparity image
 
-        axisangle, translation = model['pose_network'](torch.cat((target, source_1), dim=1))
-        T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=False)
-        poses['1'] = T
-        
-        ## reprojection
-        #  -1
-        cam_points = backproject_depth(depth, inv_K)
-        pix_coords = project_3d(cam_points, K, poses['-1'])
-        pred_recons_image_minus_1 = F.grid_sample(source_minus_1, pix_coords, padding_mode="border")
+            ## disp to depth
+            _, depth = disp_to_depth(disp_0, 0.1, 100)
+            inv_depth = 1 / depth
+            mean_inv_depth = inv_depth.mean(3, True).mean(2, True)
 
-        #  +1
-        cam_points = backproject_depth(depth, inv_K)
-        pix_coords = project_3d(cam_points, K, poses['1'])
-        pred_recons_image_1 = F.grid_sample(source_1, pix_coords, padding_mode="border")
+            ## Pose estimation
+            poses = {}
+            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, target), dim=1))
+            T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=True)
+            poses['-1'] = T
 
-        ## reprojection loss
-        loss = 0
-        reprojection_losses = []
+            axisangle, translation = model['pose_network'](torch.cat((target, source_1), dim=1))
+            T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=False)
+            poses['1'] = T
+            
+            ## reprojection
+            #  -1
+            cam_points = backproject_depth(depth, inv_K)
+            pix_coords = project_3d(cam_points, K, poses['-1'])
+            pred_recons_image_minus_1 = F.grid_sample(source_minus_1, pix_coords, padding_mode="border")
 
-        #  -1
-        reprojection_losses.append(compute_reprojection_loss(pred_recons_image_minus_1, target))
-        
-        #  +1
-        reprojection_losses.append(compute_reprojection_loss(pred_recons_image_1, target))
-        
+            #  +1
+            cam_points = backproject_depth(depth, inv_K)
+            pix_coords = project_3d(cam_points, K, poses['1'])
+            pred_recons_image_1 = F.grid_sample(source_1, pix_coords, padding_mode="border")
 
-        reprojection_losses = torch.cat(reprojection_losses, 1)
-        combined = reprojection_losses.mean(1, keepdim=True)
+            ## reprojection loss
+            loss = 0
+            reprojection_losses = []
 
-        if combined.shape[1] == 1:
-            to_optimise = combined
-        else:
-            to_optimise, idxs = torch.min(combined, dim=1)
+            #  -1
+            reprojection_losses.append(compute_reprojection_loss(pred_recons_image_minus_1, target))
+            
+            #  +1
+            reprojection_losses.append(compute_reprojection_loss(pred_recons_image_1, target))
+            
 
-        loss += to_optimise.mean()
-        
+            reprojection_losses = torch.cat(reprojection_losses, 1)
+            combined = reprojection_losses.mean(1, keepdim=True)
 
-        ## smooth loss
-        mean_disp = disp_0.mean(2, True).mean(3, True)
-        norm_disp = disp_0 / (mean_disp + 1e-7)
-        smooth_loss = get_smooth_loss(norm_disp, target)
-        smooth_loss = DISPARITY_SMOOTHNESS * smooth_loss
+            if combined.shape[1] == 1:
+                to_optimise = combined
+            else:
+                to_optimise, idxs = torch.min(combined, dim=1)
 
-        ## total loss
-        loss = loss + smooth_loss
+            loss += to_optimise.mean()
+            
+
+            ## smooth loss
+            mean_disp = disp_0.mean(2, True).mean(3, True)
+            norm_disp = disp_0 / (mean_disp + 1e-7)
+            smooth_loss = get_smooth_loss(norm_disp, target)
+            smooth_loss = DISPARITY_SMOOTHNESS * smooth_loss
+
+            ## total loss
+            loss = loss + smooth_loss
+            total_loss += loss
 
         ## Training batch
         mean_loss.append(loss.item())
         optimizer.zero_grad()
-        loss.backward()
+        total_loss.backward()
         optimizer.step()
 
         ## Tensorboard logging
