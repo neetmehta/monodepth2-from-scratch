@@ -90,12 +90,11 @@ for epoch in range(start_epoch, NUM_EPOCHS):
         for i in scales:
             
             ## Input to cuda
-            source_1, source_minus_1 = sample[('source_1', i)].to(device), sample[('source_minus_1', i)].to(device) 
+            source_1, source_minus_1, target = sample[('source_1', i)].to(device), sample[('source_minus_1', i)].to(device), sample[('target', i)].to(device) 
             K, inv_K = sample[('K', i)].to(device), sample[('inv_K', i)].to(device)
 
             ## disparity prediction
-            disp = model['depth_network'](target)
-            disp_0 = disp[('disp',i)]      # Full scale disparity image
+            disp_0 = disp[('disp', i)]      # Full scale disparity image
 
             ## disp to depth
             _, depth = disp_to_depth(disp_0, 0.1, 100)
@@ -104,11 +103,11 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
             ## Pose estimation
             poses = {}
-            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, sample[('target', i).to(device)]), dim=1))
+            axisangle, translation = model['pose_network'](torch.cat((source_minus_1, target), dim=1))
             T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=True)
             poses['-1'] = T
 
-            axisangle, translation = model['pose_network'](torch.cat((sample[('target', i)].to(device), source_1), dim=1))
+            axisangle, translation = model['pose_network'](torch.cat((target, source_1), dim=1))
             T = transformation_from_parameters(axisangle[:,0], translation[:,0]* mean_inv_depth[:, 0], invert=False)
             poses['1'] = T
             

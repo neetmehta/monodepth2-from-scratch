@@ -23,7 +23,9 @@ class KittiOdom(Dataset):
         self.K[1, :] *= resize[0]
 
         self.inv_k = np.linalg.pinv(self.K)
-        self.to_tensor = transforms.Compose([transforms.Resize(resize), transforms.ToTensor()])
+        self.to_tensor = {}
+        for i in scales:
+            self.to_tensor[i] = transforms.Compose([transforms.Resize((resize[0]//(2**i), resize[1]//(2**i))), transforms.ToTensor()])
         self.scales = scales
 
     def __len__(self):
@@ -35,11 +37,12 @@ class KittiOdom(Dataset):
         source_minus_1 = Image.open(os.path.join(self.root, self.img_list.iloc[index]['source_minus_1']))
         target = Image.open(os.path.join(self.root, self.img_list.iloc[index]['target']))
         
-        source_1, source_minus_1, target = self.to_tensor(source_1), self.to_tensor(source_minus_1), self.to_tensor(target)
+        
         for i in self.scales:
-            sample[('source_1', i)] = source_1/(2**i)
-            sample[('source_minus_1', i)] = source_minus_1/(2**i)
-            sample[('target', i)] = target/(2**i)
+            source_1_tensor, source_minus_1_tensor, target_tensor = self.to_tensor[i](source_1), self.to_tensor[i](source_minus_1), self.to_tensor[i](target)
+            sample[('source_1', i)] = source_1_tensor
+            sample[('source_minus_1', i)] = source_minus_1_tensor
+            sample[('target', i)] = target_tensor
             sample[('K', i)] = torch.from_numpy(self.K)/(2**i)
             sample[('inv_K', i)] = np.linalg.pinv(sample[('K', i)])
         return sample
